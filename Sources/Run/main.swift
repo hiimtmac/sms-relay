@@ -1,4 +1,4 @@
 import App
 import AWSLambdaRuntime
 
-Lambda.run(SMSLambdaHandler())
+Lambda.run(SMSLambdaHandler.init)

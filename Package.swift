@@ -12,8 +12,8 @@ let package = Package(
         .executable(name: "Relay", targets: ["Run"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto.git", from: "5.0.0"),
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "0.3.0")
+        .package(url: "https://github.com/soto-project/soto.git", from: "5.1.0"),
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", .upToNextMajor(from: "0.3.0"))
     ],
     targets: [
         .target(name: "App", dependencies: [

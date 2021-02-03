@@ -8,17 +8,19 @@ public struct SMSLambdaHandler: EventLoopLambdaHandler {
     public typealias In = SNS.Event
     public typealias Out = Void
     
-    public init() {}
-    
-    public func handle(context: Lambda.Context, event: SNS.Event) -> EventLoopFuture<Void> {
-        let aws = AWSClient(
+    let awsClient: AWSClient
+
+    public init(context: Lambda.InitializationContext) {
+        self.awsClient = AWSClient(
             credentialProvider: .enviro,
-            httpClientProvider: .createNew,
+            httpClientProvider: .createNewWithEventLoopGroup(context.eventLoop),
             logger: context.logger
         )
-        
+    }
+    
+    public func handle(context: Lambda.Context, event: SNS.Event) -> EventLoopFuture<Void> {
         let pinpoint = Pinpoint(
-            client: aws,
+            client: awsClient,
             region: .cacentral1
         )
         
@@ -33,8 +35,6 @@ public struct SMSLambdaHandler: EventLoopLambdaHandler {
         }
         .flatMap(pinpoint.send)
         .flatMapThrowing { response in
-            try aws.syncShutdown()
-            
             guard
                 response.messageResponse.result?.count == 1,
                 let result = response.messageResponse.result?.first?.value
@@ -51,5 +51,17 @@ public struct SMSLambdaHandler: EventLoopLambdaHandler {
                 throw Error.unsuccessful(message: "\(status): \(message)")
             }
         }
+    }
+    
+    public func shutdown(context: Lambda.ShutdownContext) -> EventLoopFuture<Void> {
+        let promise = context.eventLoop.makePromise(of: Void.self)
+        awsClient.shutdown() { error in
+            if let error = error {
+                promise.fail(error)
+            } else {
+                promise.succeed(())
+            }
+        }
+        return promise.futureResult
     }
 }

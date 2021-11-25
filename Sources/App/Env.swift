@@ -1,16 +1,15 @@
 import Foundation
 
 enum Env: String {
-    case RELAY_AWS_ACCESS_KEY_ID
-    case RELAY_AWS_SECRET_ACCESS_KEY
-    case RELAY_DESTINATION_NUMBER
-    case RELAY_PINPOINT_APPLICATION_ID
+    case OWNER_NUMBER
+    case RELAY_NUMBER
+    case PINPOINT_APP_ID
 }
 
 extension Dictionary where Key == String, Value == String {
-    subscript(_ key: Env) -> String {
+    func get(_ key: Env) throws -> String {
         guard let value = self[key.rawValue] else {
-            fatalError("Missing environment: \(key.rawValue)")
+            throw LambdaError.missingEnvironment(key.rawValue)
         }
         
         return value

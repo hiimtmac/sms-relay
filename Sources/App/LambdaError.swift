@@ -1,10 +1,10 @@
 import Foundation
 
-enum Error: Swift.Error, LocalizedError {
-    case missingEnvironment(key: String)
+enum LambdaError: Error, LocalizedError {
+    case missingEnvironment(String)
     case missingMessage
     case badResponse
-    case unsuccessful(message: String)
+    case unsuccessful(String)
     
     var errorDescription: String? {
         switch self {

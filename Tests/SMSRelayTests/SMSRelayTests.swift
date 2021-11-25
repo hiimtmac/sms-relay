@@ -1,5 +1,5 @@
 import XCTest
-import class Foundation.Bundle
+@testable import App
 
 final class SMSRelayTests: XCTestCase {
     func testExample() throws {
@@ -7,41 +7,26 @@ final class SMSRelayTests: XCTestCase {
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
 
-        // Some of the APIs that we use below are available in macOS 10.13 and above.
-        guard #available(macOS 10.13, *) else {
-            return
+        let body = """
+        +12223334444
+        This is pretty cool
+        """
+        
+        let components = body.components(separatedBy: "\n")
+        
+        if
+            components.count >= 2,
+            let numbers = try? components[0].numbers(),
+            numbers.count == 1,
+            let number = numbers.first
+        {
+            let body = components
+                .dropFirst()
+                .joined(separator: "\n")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            print(number, body)
+        } else {
+            print(body)
         }
-
-        let fooBinary = productsDirectory.appendingPathComponent("SMS-Pinpoint-SNS-Test")
-
-        let process = Process()
-        process.executableURL = fooBinary
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-
-        try process.run()
-        process.waitUntilExit()
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8)
-
-        XCTAssertEqual(output, "Hello, world!\n")
     }
-
-    /// Returns path to the built products directory.
-    var productsDirectory: URL {
-      #if os(macOS)
-        for bundle in Bundle.allBundles where bundle.bundlePath.hasSuffix(".xctest") {
-            return bundle.bundleURL.deletingLastPathComponent()
-        }
-        fatalError("couldn't find the products directory")
-      #else
-        return Bundle.main.bundleURL
-      #endif
-    }
-
-    static var allTests = [
-        ("testExample", testExample),
-    ]
 }

@@ -8,7 +8,7 @@ docker run \
     --rm \
     --volume "$(pwd)/:/src" \
     --workdir "/src/" \
-    swift:5.3-amazonlinux2 \
+    swift:5.5-amazonlinux2 \
     swift build --product "$executable" -c release -Xswiftc -static-stdlib
 
 target=".build/lambda/$executable"

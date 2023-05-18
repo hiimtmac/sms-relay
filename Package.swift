@@ -11,8 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/soto-project/soto.git", from: "6.6.0"),
         .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "1.0.0-alpha.1"),
-//        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "0.1.0")
-        .package(url: "https://github.com/hiimtmac/swift-aws-lambda-events.git", branch: "fix/sns-coding-keys")
+        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", branch: "main")
     ],
     targets: [
         .executableTarget(

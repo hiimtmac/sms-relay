@@ -1,14 +1,11 @@
+@testable import Lambda
+import AWSLambdaEvents
 import XCTest
-@testable import App
 
 final class SMSRelayTests: XCTestCase {
     func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-
         let body = """
-        +12223334444
+        +12223334444 +12223334444
         This is pretty cool
         """
         

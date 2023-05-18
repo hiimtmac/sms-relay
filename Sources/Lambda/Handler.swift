@@ -1,21 +1,34 @@
 import AWSLambdaEvents
 import AWSLambdaRuntime
-import NIO
 import Foundation
 import SotoPinpoint
 
-public struct SMSLambdaHandler: AsyncLambdaHandler {
-    public typealias In = SNS.Event
-    public typealias Out = Void
+@main
+struct SMSLambdaHandler: LambdaHandler {
+    typealias Event = SNSEvent
+    typealias Output = Void
     
     let pinpoint: Pinpoint
 
-    public init(context: Lambda.InitializationContext) {        
+    init(context: LambdaInitializationContext) async throws {
         let awsClient = AWSClient(
             credentialProvider: .environment,
             httpClientProvider: .createNewWithEventLoopGroup(context.eventLoop),
             logger: context.logger
         )
+        
+        context.terminator.register(name: "Shutdown Client") { eventLoop in
+            let promise = eventLoop.makePromise(of: Void.self)
+            Task {
+                do {
+                    try await awsClient.shutdown()
+                    promise.succeed()
+                } catch {
+                    promise.fail(error)
+                }
+            }
+            return promise.futureResult
+        }
         
         self.pinpoint = Pinpoint(
             client: awsClient,
@@ -24,19 +37,15 @@ public struct SMSLambdaHandler: AsyncLambdaHandler {
         )
     }
     
-    public func handle(event: SNS.Event, context: Lambda.Context) async throws {
+    func handle(_ event: Event, context: LambdaContext) async throws {
         let ownerNumber = try env.get(.OWNER_NUMBER)
         let relayNumber = try env.get(.RELAY_NUMBER)
         
-        guard let messagePayload = event.records.first?.sns.message else {
-            context.logger.error("No message in payload: \(event.records)")
-            throw LambdaError.missingMessage
-        }
+        let message = try event.snsMessage(logger: context.logger)
         
-        let data = Data(messagePayload.utf8)
-        let message = try JSONDecoder().decode(SNSMessage.self, from: data)
-        
-        let response: Pinpoint.SendMessagesResponse
+        let body: String
+        let from: String
+        let to: String
         
         if message.originationNumber == ownerNumber {
             let components = message.messageBody.components(separatedBy: "\n")
@@ -47,39 +56,37 @@ public struct SMSLambdaHandler: AsyncLambdaHandler {
                 numbers.count == 1,
                 let number = numbers.first
             {
-                let body = components
+                body = components
                     .dropFirst()
                     .joined(separator: "\n")
                     .trimmingCharacters(in: .whitespacesAndNewlines)
-                response = try await pinpoint.send(
-                    body: body,
-                    from: relayNumber,
-                    to: number
-                )
+
+                from = relayNumber
+                to = number
             } else {
-                let body = """
+                body = """
                 Relayed: \(message.originationNumber):
                 \(message.messageBody)
                 """
                 
-                response = try await pinpoint.send(
-                    body: body,
-                    from: relayNumber,
-                    to: ownerNumber
-                )
+                from = relayNumber
+                to = ownerNumber
             }
         } else {
-            let body = """
+            body = """
             Relayed: \(message.originationNumber):
             \(message.messageBody)
             """
             
-            response = try await pinpoint.send(
-                body: body,
-                from: relayNumber,
-                to: ownerNumber
-            )
+            from = relayNumber
+            to = ownerNumber
         }
+        
+        let response = try await pinpoint.send(
+            body: body,
+            from: from,
+            to: to
+        )
         
         guard
             response.messageResponse.result?.count == 1,
@@ -96,17 +103,5 @@ public struct SMSLambdaHandler: AsyncLambdaHandler {
             context.logger.error("\(status): \(message)")
             throw LambdaError.unsuccessful("\(status): \(message)")
         }
-    }
-    
-    public func shutdown(context: Lambda.ShutdownContext) -> EventLoopFuture<Void> {
-        let promise = context.eventLoop.makePromise(of: Void.self)
-        pinpoint.client.shutdown() { error in
-            if let error = error {
-                promise.fail(error)
-            } else {
-                promise.succeed(())
-            }
-        }
-        return promise.futureResult
     }
 }

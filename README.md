@@ -2,6 +2,10 @@
 
 How to hook up lambda to receive SMS messages through AWS Pinpoint-SNS-Lambda
 
+## Build
+
+`swift package --disable-sandbox archive`
+
 ## Code
 
 - Clone project
@@ -63,7 +67,7 @@ How to hook up lambda to receive SMS messages through AWS Pinpoint-SNS-Lambda
 - Select `Roles` menu item
   - Select `Create role` button
     - Attach previously created `PINPOINT_POLICY`
-    - Attach `AWSLambdaBasicExecutionRole` 
+    - Attach `AWSLambdaBasicExecutionRole`
 
 ### Lambda
 

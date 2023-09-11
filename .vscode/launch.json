@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "sourceLanguages": ["swift"],
+      "name": "Debug Lambda",
+      "program": "${workspaceFolder:SMSRelay}/.build/debug/Lambda",
+      "args": [],
+      "cwd": "${workspaceFolder:SMSRelay}",
+      "preLaunchTask": "swift: Build Debug Lambda"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "sourceLanguages": ["swift"],
+      "name": "Release Lambda",
+      "program": "${workspaceFolder:SMSRelay}/.build/release/Lambda",
+      "args": [],
+      "cwd": "${workspaceFolder:SMSRelay}",
+      "preLaunchTask": "swift: Build Release Lambda"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ extension Pinpoint {
             messageRequest: .init(
                 addresses: [to: .init(channelType: .sms)],
                 messageConfiguration: .init(
-                    sMSMessage: .init(
+                    smsMessage: .init(
                         body: body,
                         messageType: .transactional,
                         originationNumber: from

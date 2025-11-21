@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,13 +6,12 @@ import PackageDescription
 let package = Package(
     name: "sms-relay",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v15)
+        .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto.git", from: "6.8.0"),
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-runtime.git", from: "1.0.0-alpha.2"),
-        .package(url: "https://github.com/swift-server/swift-aws-lambda-events.git", from: "0.2.0")
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.10.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime.git", from: "2.4.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.3.0")
     ],
     targets: [
         .executableTarget(
@@ -23,9 +22,8 @@ let package = Package(
                 .product(name: "SotoPinpoint", package: "soto")
             ],
             swiftSettings: [
-                .enableUpcomingFeature("BareSlashRegexLiterals"),
                 .enableUpcomingFeature("ExistentialAny"),
-                .enableUpcomingFeature("StrictConcurrency")
+                .unsafeFlags(["-Xlinker", "-S"], .when(configuration: .release))
             ]
         ),
         .testTarget(

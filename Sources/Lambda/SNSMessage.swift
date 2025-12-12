@@ -1,10 +1,14 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import Logging
 import AWSLambdaEvents
 
 struct SNSMessage: Codable {
     let originationNumber: String // +XXXXXXXXXXX - From (number that sent the message)
-    let destinationNumber: String // +XXXXXXXXXXX - To (which which pinpoint long code)
+    let destinationNumber: String // +XXXXXXXXXXX - To (which pinpoint long code)
     let messageBody: String // Text message body
 }
 

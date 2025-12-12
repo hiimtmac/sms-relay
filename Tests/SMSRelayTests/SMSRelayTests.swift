@@ -1,9 +1,11 @@
 @testable import Lambda
 import AWSLambdaEvents
-import XCTest
+import Testing
 
-final class SMSRelayTests: XCTestCase {
-    func testExample() throws {
+@Suite
+struct SMSRelayTests {
+    @Test
+    func example() throws {
         let body = """
         +12223334444 +12223334444
         This is pretty cool

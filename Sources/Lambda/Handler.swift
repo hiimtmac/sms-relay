@@ -1,45 +1,48 @@
 import AWSLambdaEvents
 import AWSLambdaRuntime
-import Foundation
-import SotoPinpoint
+import Configuration
+import Logging
+import ServiceLifecycle
+import SotoPinpointSMSVoiceV2
 
 @main
-struct SMSLambdaHandler: LambdaHandler {
-    typealias Event = SNSEvent
-    typealias Output = Void
+struct LambdaFunction {
+    let aws: AWSClient
+    let pinpointV2: PinpointSMSVoiceV2
+    let config: ConfigReader
+    let logger: Logger
     
-    let pinpoint: Pinpoint
-
-    init(context: LambdaInitializationContext) async throws {
-        let awsClient = AWSClient(
-            credentialProvider: .environment,
-            httpClientProvider: .createNewWithEventLoopGroup(context.eventLoop),
-            logger: context.logger
-        )
+    private init() async throws {
+        var logger = Logger(label: "sns-relay")
+        logger.logLevel = Lambda.env("LOG_LEVEL").flatMap(Logger.Level.init) ?? .info
+                
+        let aws = AWSClient()
+        let pinpointV2 = PinpointSMSVoiceV2(client: aws, region: .cacentral1)
         
-        context.terminator.register(name: "Shutdown Client") { eventLoop in
-            let promise = eventLoop.makePromise(of: Void.self)
-            Task {
-                do {
-                    try await awsClient.shutdown()
-                    promise.succeed()
-                } catch {
-                    promise.fail(error)
-                }
-            }
-            return promise.futureResult
-        }
+        let env = EnvironmentVariablesProvider()
+        let config = ConfigReader(provider: env)
         
-        self.pinpoint = Pinpoint(
-            client: awsClient,
-            region: .cacentral1,
-            byteBufferAllocator: context.allocator
-        )
+        self.aws = aws
+        self.pinpointV2 = pinpointV2
+        self.config = config
+        self.logger = logger
     }
     
-    func handle(_ event: Event, context: LambdaContext) async throws {
-        let ownerNumber = try env.get(.OWNER_NUMBER)
-        let relayNumber = try env.get(.RELAY_NUMBER)
+    private func start() async throws {
+        let lambdaRuntime = LambdaRuntime(logger: self.logger, body: self.handler)
+        let serviceGroup = ServiceGroup(
+            services: [aws, lambdaRuntime],
+            gracefulShutdownSignals: [.sigterm],
+            cancellationSignals: [.sigint],
+            logger: self.logger
+        )
+        
+        try await serviceGroup.run()
+    }
+
+    func handler(_ event: SNSEvent, context: LambdaContext) async throws {
+        let ownerNumber = try config.requiredString(forKey: "OWNER_NUMBER")
+        let relayNumber = try config.requiredString(forKey: "RELAY_NUMBER")
         
         let message = try event.snsMessage(logger: context.logger)
         
@@ -82,26 +85,19 @@ struct SMSLambdaHandler: LambdaHandler {
             to = ownerNumber
         }
         
-        let response = try await pinpoint.send(
-            body: body,
-            from: from,
-            to: to
+        let _ = try await pinpointV2.sendTextMessage(
+            PinpointSMSVoiceV2.SendTextMessageRequest(
+                destinationPhoneNumber: to,
+                maxPrice: "0.1",
+                messageBody: body,
+                messageType: .transactional,
+                originationIdentity: from
+            ),
+            logger: context.logger
         )
-        
-        guard
-            response.messageResponse.result?.count == 1,
-            let result = response.messageResponse.result?.first?.value
-        else {
-            context.logger.error("Bad Pinpoint Response")
-            throw LambdaError.badResponse
-        }
-        
-        guard result.deliveryStatus.description == "SUCCESSFUL" else {
-            let status = result.deliveryStatus.description
-            let message = result.statusMessage ?? "no message"
-            
-            context.logger.error("\(status): \(message)")
-            throw LambdaError.unsuccessful("\(status): \(message)")
-        }
+    }
+
+    static func main() async throws {
+        try await LambdaFunction().start()
     }
 }

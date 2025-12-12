@@ -11,7 +11,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/soto-project/soto.git", from: "7.10.0"),
         .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime.git", from: "2.4.0"),
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.3.0")
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0")
     ],
     targets: [
         .executableTarget(
@@ -19,7 +20,8 @@ let package = Package(
             dependencies: [
                 .product(name: "AWSLambdaRuntime", package: "swift-aws-lambda-runtime"),
                 .product(name: "AWSLambdaEvents", package: "swift-aws-lambda-events"),
-                .product(name: "SotoPinpoint", package: "soto")
+                .product(name: "SotoPinpointSMSVoiceV2", package: "soto"),
+                .product(name: "Configuration", package: "swift-configuration")
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny"),

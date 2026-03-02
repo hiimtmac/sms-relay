@@ -13,15 +13,15 @@ struct LambdaFunction {
     let logger: Logger
     
     private init() async throws {
-        var logger = Logger(label: "sns-relay")
-        logger.logLevel = Lambda.env("LOG_LEVEL").flatMap(Logger.Level.init) ?? .info
-                
-        let aws = AWSClient()
-        let pinpointV2 = PinpointSMSVoiceV2(client: aws, region: .cacentral1)
-        
         let env = EnvironmentVariablesProvider()
         let config = ConfigReader(provider: env)
         
+        var logger = Logger(label: "sns-relay")
+        logger.logLevel = config.string(forKey: "LOG_LEVEL", as: Logger.Level.self) ?? .info
+                
+        let aws = AWSClient()
+        let pinpointV2 = PinpointSMSVoiceV2(client: aws, region: .cacentral1)
+
         self.aws = aws
         self.pinpointV2 = pinpointV2
         self.config = config

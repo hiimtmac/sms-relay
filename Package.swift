@@ -9,10 +9,10 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto.git", from: "7.10.0"),
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime.git", from: "2.4.0"),
-        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.3.0"),
-        .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0")
+        .package(url: "https://github.com/soto-project/soto.git", from: "7.13.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-runtime.git", from: "2.8.0"),
+        .package(url: "https://github.com/awslabs/swift-aws-lambda-events.git", from: "1.5.0"),
+        .package(url: "https://github.com/apple/swift-configuration.git", from: "1.1.0")
     ],
     targets: [
         .executableTarget(
